@@ -1,0 +1,148 @@
+const path = require('path');
+const webpack = require('webpack');
+const ExtractTextPlugin = require("extract-text-webpack-plugin");
+
+module.exports = {
+    // 单文件入口
+    entry: './loader_study/test.js',
+
+    // 输出
+    output: {
+        // 这个 publicPath 比较重要, 这里写的一定要和 index.html 引入的 main js 路径对应
+        // 不然 devServer 时都找不到对应的 js 文件
+        publicPath: '/dist/',
+        filename: 'main.js',
+    },
+
+    module: {
+        rules: [{
+            test: /\.css$/,
+            // webpack 并没有自带 loader 这两个都要自己安装
+            // npm install style-loader --save-dev
+            // npm install css-loader --save-dev
+
+            // use: [
+            //     'style-loader',
+            //     'css-loader'
+            // ]
+
+            // 配合 extract text 放到外面 在 devServer 中好使不行的
+            use: ExtractTextPlugin.extract({
+                fallback: "style-loader",
+                use: "css-loader"
+            })
+        }]
+    },
+
+    /**
+     * 解析处理，如
+     *      模块路径别名 alias
+     *      node_modules 的目录切换 modules
+     *      引用文件自动补全后比 extensions
+     */
+    resolve: {
+        // import {xx} from 'Utils/xxx.js' 目录解析的路径替换
+        alias: {
+            Utils: path.resolve(__dirname, 'src/utils/'),
+        },
+        // import {xx} from 'Utils/xxx' .js 或 .vue 后缀就不用写了
+        extensions: ['.js', '.vue']
+
+    },
+
+    /**
+     * devtool
+     * This option controls if and how source maps are generated.
+     * 
+     * @see https://webpack.js.org/configuration/devtool/#components/sidebar/sidebar.jsx
+     * 
+     * eval 会把 module 中的代码改成 eval('source code'); 这样，所以不能用于生产环境
+     * 
+     * cheap-eval-source-map ？没看出来和eval 差不多？
+     * 
+     * cheap-source-map 这个就不会 eval只是在 对应的 module 下面写了一行 # sourceMappingURL=main.js.map
+     * 
+     * hidden-source-map 没有 source map ，这是默认的选项吗 ？
+     * 
+     * nosources-source-map 这个是生成source map 但是在代码里不映射，也就是debug断点一片空白，这是什么呢？
+     * 
+     * 更细粒度的控制原码映射，比如什么模块显示，什么不显示
+     * @see https://webpack.js.org/plugins/source-map-dev-tool-plugin/
+     * 
+     */
+    devtool: 'eval',
+
+    /**
+     * 各种插件
+     */
+    plugins: [
+        /**
+         * 这个 define 好像可能就像 c 语言的 define ，用来定义常量, 
+         * 最后编译的时候只会把 PRODUCTION 对应的值，toString 然后插入到代码里的各种地方而已
+         * 对应的还有两个 
+         *    EnvironmentPlugin 就是  process.env.XXX 的 shorthand 方法
+         *    DotenvPlugin 就是可以像 Laravel 那样用 .env 文件来当环境变量
+         *      @see https://github.com/mrsteele/dotenv-webpack 
+         *      还是觉得 define 简明  
+         */
+        new webpack.DefinePlugin({
+            PRODUCTION: true,
+            // key 就会被替换成 value
+            'process.env.NODE_ENV': JSON.stringify(process.env.NODE_ENV),
+        }),
+
+        // 自动载入预设的模块，不需要在代码中 import 可以直接用
+        // new webpack.ProvidePlugin({
+        //     identifier: 'module1',
+        //     // ...
+        // })
+
+        /**
+         * 将插入到 html style 元素中的 css 提出到一个单独的 css 文件中在 index html 中就可以引用了
+         * 需要在 loader 处配合使用
+         *      @see https://webpack.js.org/plugins/extract-text-webpack-plugin/
+         */
+        new ExtractTextPlugin("./dist/styles.css"),
+    ],
+
+    // 监听文件改动就重新编译
+    // watch: true,
+
+    /**
+     * devServer 提供一个简单服务器 用于实时预览编译结果，
+     *      开启 webpack-dev-server 时会自动 watch true 监听编译
+     *      基于 webpack-dev-middleware 可以解决 跨域的问题
+     * 使用 devServer
+     *      npm install webpack-dev-server --save-dev
+     * 使用时不是 webpack xxx 而是 webpack-dev-server xxx
+     * 参考 npm run serve
+     */
+    devServer: {
+        // 开启 watch 
+        // 允许外网访问
+        disableHostCheck: true,
+        // 绑定地址
+        host: 'localhost',
+        // 绑定端口
+        port: 9000,
+        // server 的 / 路由从哪个文件夹开始, 可以是数组，有多个 content base?
+        // 我觉得这个其实用处不太，除非服务器也用 alias目录了，不然没有什么东西放在各种不同的目录下
+        contentBase: [path.join(__dirname), path.join(__dirname, '/dist')],
+        // 开启 gzip 压缩
+        compress: true,
+        // 自动打开 浏览器 ？ 并没有
+        open: true,
+        // 代理跨域请求
+        proxy: {
+            "/api": {
+                // 所有 /api 请求都会重定向给 my-dev.me
+                target: "http://wemall.me/",
+                // /api/xxx 重写为 http://wemall.me/xxx 
+                pathRewrite: { "^/api": "" },
+                // 这个一定要写，不然不能使用本地 vhost
+                changeOrigin: true
+            }
+        }
+    }
+
+}
