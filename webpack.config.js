@@ -1,17 +1,53 @@
 const path = require('path');
 const webpack = require('webpack');
 const ExtractTextPlugin = require("extract-text-webpack-plugin");
+const HtmlWebpackPlugin = require('html-webpack-plugin');
 
 module.exports = {
-    // 单文件入口
+    /**
+     * string | [string] | object { <key>: string | [string] } 
+     * 
+     * 
+     */
     entry: './loader_study/test.js',
 
     // 输出
     output: {
-        // 这个 publicPath 比较重要, 这里写的一定要和 index.html 引入的 main js 路径对应
-        // 不然 devServer 时都找不到对应的 js 文件
-        publicPath: '/dist/',
+        // 编译时输出的根目录
+        // 这是 filename 与 chunkFilename 编译到的目录，不影响 runtime 
+        path: path.resolve(__dirname, 'dist'),
+
         filename: 'main.js',
+
+        // 使用 common chunk 一定要这么写，因为会编译出多个文件
+        // filename: '[name].bundle.js',
+        // filename: 'dist/[id].[hash].main.js',
+        // 异步加载的模块的命名
+        chunkFilename: '[id].[name].[chunkhash].js',
+
+        // 运行时js载入根目录
+        // 是最后代码在浏览器中运行时 runtime 载入对应的 module 时会加上的前缀
+        publicPath: '/dist/',
+
+        // 导出的各种类型输出库的名字，如果不设置整个编译结果就是个IIFE
+        library: {
+            root: "rootZeon", // this 可能是 winodw 或 global
+            amd: "amdZeon", // 这个写法好像没什么用啊
+            commonjs: "commonZeon",
+            window: "winZeon", // 这个写法好像是错的
+            global: "globalZeon", // 这个写法好像也是错的
+        },
+
+        // ??? 这是
+        libraryTarget: "umd",
+
+        // 模块化输出时的注释文字
+        auxiliaryComment: {
+            root: "Root Comment",
+            commonjs: "CommonJS Comment",
+            commonjs2: "CommonJS2 Comment",
+            amd: "AMD Comment"
+        }
     },
 
     module: {
@@ -57,6 +93,7 @@ module.exports = {
      * @see https://webpack.js.org/configuration/devtool/#components/sidebar/sidebar.jsx
      * 
      * eval 会把 module 中的代码改成 eval('source code'); 这样，所以不能用于生产环境
+     *      编译完模块会保留原始的名字，不是太好看，不过编译也不能用这个， devServer 是能看的
      * 
      * cheap-eval-source-map ？没看出来和eval 差不多？
      * 
@@ -70,7 +107,8 @@ module.exports = {
      * @see https://webpack.js.org/plugins/source-map-dev-tool-plugin/
      * 
      */
-    devtool: 'eval',
+    // devtool: 'eval',
+    // devtool: 'cheap-source-map',
 
     /**
      * 各种插件
@@ -102,7 +140,42 @@ module.exports = {
          * 需要在 loader 处配合使用
          *      @see https://webpack.js.org/plugins/extract-text-webpack-plugin/
          */
-        new ExtractTextPlugin("./dist/styles.css"),
+        new ExtractTextPlugin("styles.css"),
+
+        /**
+         * 代码优化：把相同的引用提取到同一个模块中
+         * 
+         * Prevent Duplication
+         */
+        // new webpack.optimize.CommonsChunkPlugin({
+        //     name: 'dist/common' // Specify the common bundle's name.
+        // }),
+
+        /**
+         * If you have multiple webpack entry points, they will all be 
+         * included with script tags in the generated HTML.
+         * 
+         * 多个入口或用 hash js name 时，extract css 文件时，都需要动态注入
+         */
+        new HtmlWebpackPlugin({
+            title: 'Custom title',
+
+            filename: '../index_build.html',
+
+            /**
+             * @see https://github.com/kangax/html-minifier#options-quick-reference
+             * 传入 html-minifier 的配置对象 
+             */
+            minify: {
+                collapseWhitespace: true,
+
+                removeComments: true,
+            },
+
+            // template: 'src/tpl.html',
+
+            template: 'src/tpl.ejs'
+        })
     ],
 
     // 监听文件改动就重新编译
