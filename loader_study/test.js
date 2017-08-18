@@ -5,7 +5,9 @@ console.log(PRODUCTION);
 console.log(sync);
 
 /**
- * import 异步加载组件 ，TODO 封装 async
+ * import 异步加载组件 ，TODO 封装 async, 此时 Promise 没有 polyfill 并且
+ * 箭头函数也没有编译成 ES5 ，还需要引入 babel 
+ * 再下一步就是编译 vue/jsx 等 spa
  */
 function getComponent() {
     return import ( /* webpackChunkName: "z-async" */ './async-mod.js')

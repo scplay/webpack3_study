@@ -17,10 +17,10 @@ module.exports = {
         // 这是 filename 与 chunkFilename 编译到的目录，不影响 runtime 
         path: path.resolve(__dirname, 'dist'),
 
-        filename: 'main.js',
+        // filename: 'main.js',
 
         // 使用 common chunk 一定要这么写，因为会编译出多个文件
-        // filename: '[name].bundle.js',
+        filename: '[name].[chunkhash].js',
         // filename: 'dist/[id].[hash].main.js',
         // 异步加载的模块的命名
         chunkFilename: '[id].[name].[chunkhash].js',
@@ -147,9 +147,9 @@ module.exports = {
          * 
          * Prevent Duplication
          */
-        // new webpack.optimize.CommonsChunkPlugin({
-        //     name: 'dist/common' // Specify the common bundle's name.
-        // }),
+        new webpack.optimize.CommonsChunkPlugin({
+            name: 'common' // Specify the common bundle's name.
+        }),
 
         /**
          * If you have multiple webpack entry points, they will all be 
