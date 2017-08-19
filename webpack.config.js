@@ -11,6 +11,15 @@ module.exports = {
      */
     entry: './loader_study/test.js',
 
+    /** 
+     * 增加 Promise 等这polyfill 多了 257KB 
+     * @see https://babeljs.io/docs/usage/polyfill/
+     * 
+     * 如果只想引入单独的 es6 es7 新方法可使用 core.js
+     *      @see https://github.com/zloirock/core-js
+     */
+    // entry: ["babel-polyfill", './loader_study/test.js'],
+
     // 输出
     output: {
         // 编译时输出的根目录
@@ -52,9 +61,9 @@ module.exports = {
          * "commonjs" | "commonjs2" | "commonjs-module" | 
          * "amd" | "umd" | "umd2" | "jsonp"
          */
-        libraryTarget: "commonjs2",
+        libraryTarget: "umd",
         // amd 要有名字必须有这个
-        // umdNamedDefine: true,
+        umdNamedDefine: true,
 
         // 模块化输出时的注释文字
         auxiliaryComment: {
@@ -82,6 +91,20 @@ module.exports = {
                 fallback: "style-loader",
                 use: "css-loader"
             })
+        }, {
+            /**
+             * 使用 babel 转码 es6 语法，注意是语法，不是 es6 函数
+             * npm install --save-dev babel-loader babel-core babel-preset-env
+             * preset-env is a preset contain babel plugins package for many es6 es7 syntax
+             */
+            test: /\.js$/,
+            exclude: /(node_modules|bower_components)/,
+            use: {
+                loader: 'babel-loader'
+            },
+            options: {
+                cacheDirectroy: true
+            }
         }]
     },
 
