@@ -1,7 +1,16 @@
 const path = require('path');
 const webpack = require('webpack');
+
+// extract style to css file
 const ExtractTextPlugin = require("extract-text-webpack-plugin");
+
+// html template inject
 const HtmlWebpackPlugin = require('html-webpack-plugin');
+
+// js compress
+const UglifyJSPlugin = require('uglifyjs-webpack-plugin');
+
+process.env.PRODUCTION = false;
 
 module.exports = {
     /**
@@ -81,15 +90,28 @@ module.exports = {
             // npm install style-loader --save-dev
             // npm install css-loader --save-dev
 
+            /**
+             * css loader 会入 import 中读出 css 样式
+             * style loader 会把样式插入到 html 中的 style 标签中 
+             */
             // use: [
             //     'style-loader',
             //     'css-loader'
             // ]
 
-            // 配合 extract text 放到外面 在 devServer 中好使不行的
+            /**
+             * 配合 extract text plugin 可以把 style 中的 css 提取成文件
+             */
             use: ExtractTextPlugin.extract({
                 fallback: "style-loader",
-                use: "css-loader"
+                use: {
+                    loader: "css-loader",
+
+                    // 如需要压缩可以这样写
+                    options: {
+                        // minimize: false // true
+                    }
+                }
             })
         }, {
             /**
@@ -100,11 +122,43 @@ module.exports = {
             test: /\.js$/,
             exclude: /(node_modules|bower_components)/,
             use: {
-                loader: 'babel-loader'
-            },
-            options: {
-                cacheDirectroy: true
+                loader: 'babel-loader',
+                options: {
+                    cacheDirectory: true
+                }
             }
+        }, {
+            /**
+             * less
+             */
+            test: /\.less$/,
+
+            /**
+             * 用 ExtractTextPlugin 提出成单独的文件
+             */
+            use: ExtractTextPlugin.extract({
+                fallback: "style-loader",
+                use: [{
+                    loader: "css-loader" // translates CSS into CommonJS
+                }, {
+                    /**
+                     * 如果使用 postcss 要放在 style - css loader 后面，
+                     * 其他预编译 css loader的前面
+                     * 并且可以直接替换 css - loader 的位置？
+                     */
+                    loader: 'postcss-loader'
+                }, {
+                    loader: "less-loader" // compiles Less to CSS
+                }]
+            }),
+
+            // use: [{
+            //     loader: "style-loader" // creates style nodes from JS strings
+            // }, {
+            //     loader: "css-loader" // translates CSS into CommonJS
+            // }, {
+            //     loader: "less-loader" // compiles Less to CSS
+            // }]
         }]
     },
 
@@ -165,6 +219,8 @@ module.exports = {
             PRODUCTION: true,
             // key 就会被替换成 value
             'process.env.NODE_ENV': JSON.stringify(process.env.NODE_ENV),
+
+            'process.env.PRODUCTION': 'this is in development stage',
         }),
 
         // 自动载入预设的模块，不需要在代码中 import 可以直接用
@@ -178,7 +234,10 @@ module.exports = {
          * 需要在 loader 处配合使用
          *      @see https://webpack.js.org/plugins/extract-text-webpack-plugin/
          */
-        new ExtractTextPlugin("styles.css"),
+        new ExtractTextPlugin({
+            filename: "[id].[contenthash:6].css",
+
+        }),
 
         /**
          * 代码优化：把相同的引用提取到同一个模块中
@@ -213,7 +272,20 @@ module.exports = {
             // template: 'src/tpl.html',
 
             template: 'src/tpl.ejs'
-        })
+        }),
+
+        /**
+         * @see https://webpack.js.org/plugins/uglifyjs-webpack-plugin/
+         * 只能压缩 js 不能压缩 css 
+         */
+        // new UglifyJSPlugin(),
+
+        // 对就 babel 的还有 BabelMinifyWebpackPlugin
+
+        /**
+         * 编译出来加个 Banner 头
+         */
+        new webpack.BannerPlugin("!!!!!! THIS IS A WEBPACK 3 STUDY CASE ZEON USE !!!!!!!")
     ],
 
     // 监听文件改动就重新编译
