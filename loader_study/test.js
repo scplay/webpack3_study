@@ -17,9 +17,13 @@ function getComponent() {
         .catch(error => 'An error occurred while loading the component');
 }
 
-getComponent().then(component => {
-    debugger;
-    console.log(component);
-})
+// getComponent().then(component => {
+//     debugger;
+//     console.log(component);
+// })
 
 console.log(1);
+
+export default {
+    main: 1
+}

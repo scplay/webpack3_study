@@ -31,15 +31,30 @@ module.exports = {
 
         // 导出的各种类型输出库的名字，如果不设置整个编译结果就是个IIFE
         library: {
-            root: "rootZeon", // this 可能是 winodw 或 global
-            amd: "amdZeon", // 这个写法好像没什么用啊
+            /**
+             * this就是root 可能是 winodw 或 global
+             */
+            root: "rootZeon",
+            /**
+             * 这个默认是匿名的， 也就是 requireJS 直接使用文件名
+             * 只有 libraryTarget: "umd" 并且umdNamedDefine: true 时
+             */
+            amd: "amdZeon",
+            /**
+             * 用于 node 载入模块的名字
+             */
             commonjs: "commonZeon",
-            window: "winZeon", // 这个写法好像是错的
-            global: "globalZeon", // 这个写法好像也是错的
         },
 
-        // ??? 这是
-        libraryTarget: "umd",
+        /**
+         * 这是指模块多种输出格式兼容
+         * "var" | "assign" | "this" | "window" | "global" | 
+         * "commonjs" | "commonjs2" | "commonjs-module" | 
+         * "amd" | "umd" | "umd2" | "jsonp"
+         */
+        libraryTarget: "commonjs2",
+        // amd 要有名字必须有这个
+        // umdNamedDefine: true,
 
         // 模块化输出时的注释文字
         auxiliaryComment: {
@@ -147,9 +162,9 @@ module.exports = {
          * 
          * Prevent Duplication
          */
-        new webpack.optimize.CommonsChunkPlugin({
-            name: 'common' // Specify the common bundle's name.
-        }),
+        // new webpack.optimize.CommonsChunkPlugin({
+        //     name: 'common' // Specify the common bundle's name.
+        // }),
 
         /**
          * If you have multiple webpack entry points, they will all be 
