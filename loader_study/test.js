@@ -11,11 +11,29 @@ import sync from './sync-mod.js'
 import babelMod from './babel-mod.js'
 
 /**
+ * my cust loader
+ */
+import fighting from './zc-load.zc'
+
+fighting("韩红", "一");
+/**
+ * test env plugin + dotenv in webpack
+ */
+console.log(process.env.APP_DEBUG);
+console.log(process.env.SOME_AK);
+
+/**
  * Use Webpack Define Plugin
  */
 console.log(PRODUCTION);
 
-console.dir(ls);
+/**
+ * 测试 css module | 只有 .class 有类名的 css 才会成为 module, 
+ * 开启了 css module 后 .class 会编译成 .xcv13as 这样
+ * 在 import 进来的 default 上有 'class' : 'xcv13as' 这样的对应关系
+ * 需要插入到对应元素的 class 中，才能在页面上正确显示
+ */
+console.log(css, ls);
 
 /**
  * sync model

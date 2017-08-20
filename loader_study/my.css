@@ -3,6 +3,13 @@ h1 {
 }
 
 
+/* 测试CSS module */
+
+.title {
+    text-align: center;
+}
+
+
 /* 引入对css 预处理，以及模块化 */
 
 

@@ -10,6 +10,8 @@ const HtmlWebpackPlugin = require('html-webpack-plugin');
 // js compress
 const UglifyJSPlugin = require('uglifyjs-webpack-plugin');
 
+const DotenvPlugin = require('dotenv-webpack');
+
 process.env.PRODUCTION = false;
 
 module.exports = {
@@ -139,7 +141,18 @@ module.exports = {
             use: ExtractTextPlugin.extract({
                 fallback: "style-loader",
                 use: [{
-                    loader: "css-loader" // translates CSS into CommonJS
+                    /**
+                     * translates CSS into CommonJS
+                     * 
+                     * css loader 自带 cssnano , options 中 minified true 即可
+                     * @see https://github.com/webpack-contrib/css-loader
+                     */
+                    loader: "css-loader",
+                    options: {
+                        // 使用 css module
+                        // 在 react 上比较有用
+                        // modules: true
+                    }
                 }, {
                     /**
                      * 如果使用 postcss 要放在 style - css loader 后面，
@@ -159,6 +172,16 @@ module.exports = {
             // }, {
             //     loader: "less-loader" // compiles Less to CSS
             // }]
+        }, {
+            /**
+             * 使用自定义的 loader 在 node_modules 中新建一个 zc-loader
+             */
+            test: /\.zc$/,
+            use: [{
+                loader: 'babel-loader'
+            }, {
+                loader: 'zc-loader'
+            }]
         }]
     },
 
@@ -172,6 +195,8 @@ module.exports = {
         // import {xx} from 'Utils/xxx.js' 目录解析的路径替换
         alias: {
             Utils: path.resolve(__dirname, 'src/utils/'),
+            src: path.resolve(__dirname, 'loader_study/'),
+            root: path.resolve(__dirname),
         },
         // import {xx} from 'Utils/xxx' .js 或 .vue 后缀就不用写了
         extensions: ['.js', '.vue']
@@ -222,6 +247,26 @@ module.exports = {
 
             'process.env.PRODUCTION': 'this is in development stage',
         }),
+
+        /**
+         * env plugin 就是 define 的简写
+         * @see https://webpack.js.org/plugins/environment-plugin/
+         * 配合 require('dotenv').config()
+         * 但是 Variables coming from process.env are always strings.
+         * 所以 里面这个 app_debug 是 "true" 不是 true
+         * 
+         */
+        // new webpack.EnvironmentPlugin(['APP_DEBUG', 'SOME_AK']),
+
+        /**
+         * 这个是 dotenv + EnvironmentPlugin 
+         * dotenv for webpack plugin
+         * @see https://github.com/mrsteele/dotenv-webpack
+         */
+        new DotenvPlugin({
+            path: '.env' // can ignore or set other env path
+        }),
+
 
         // 自动载入预设的模块，不需要在代码中 import 可以直接用
         // new webpack.ProvidePlugin({
@@ -285,7 +330,10 @@ module.exports = {
         /**
          * 编译出来加个 Banner 头
          */
-        new webpack.BannerPlugin("!!!!!! THIS IS A WEBPACK 3 STUDY CASE ZEON USE !!!!!!!")
+        new webpack.BannerPlugin("!!!!!! THIS IS A WEBPACK 3 STUDY CASE ZEON USE !!!!!!!"),
+
+
+
     ],
 
     // 监听文件改动就重新编译

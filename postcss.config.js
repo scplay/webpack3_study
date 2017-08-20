@@ -1,4 +1,4 @@
-console.log(process.env.PRODUCTION);
+console.log(process.env.NODE_ENV);
 
 module.exports = {
     // parser: 'sugarss',
