@@ -102,8 +102,12 @@ module.exports = {
             use: {
                 loader: 'babel-loader'
             },
+
             options: {
-                cacheDirectroy: true
+                /**
+                 * 缓存编译结果加快下次编译速度
+                 */
+                cacheDirectory: true
             }
         }]
     },
