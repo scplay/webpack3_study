@@ -9,7 +9,7 @@ module.exports = {
      * 
      * 
      */
-    entry: './loader_study/test.js',
+    // entry: './loader_study/test.js',
 
     /** 
      * 增加 Promise 等这polyfill 多了 257KB 
@@ -19,6 +19,14 @@ module.exports = {
      *      @see https://github.com/zloirock/core-js
      */
     // entry: ["babel-polyfill", './loader_study/test.js'],
+
+    /**
+     * 需要增加一个通用库时 entry 的写法
+     */
+    entry: {
+        app: "./loader_study/test.js",
+        vendor: ["lodash"],
+    },
 
     // 输出
     output: {
@@ -35,8 +43,9 @@ module.exports = {
         chunkFilename: '[id].[name].[chunkhash].js',
 
         // 运行时js载入根目录
-        // 是最后代码在浏览器中运行时 runtime 载入对应的 module 时会加上的前缀
-        publicPath: '/dist/',
+        // js代码在浏览器中运行时载入对应的 module 时会加上的前缀
+        // 这个值会影响 dev server 的根路径 ？？？ 
+        // publicPath: '/dist/',
 
         // 导出的各种类型输出库的名字，如果不设置整个编译结果就是个IIFE
         library: {
@@ -100,15 +109,14 @@ module.exports = {
             test: /\.js$/,
             exclude: /(node_modules|bower_components)/,
             use: {
-                loader: 'babel-loader'
+                loader: 'babel-loader',
+                options: {
+                    /**
+                     * 缓存编译结果加快下次编译速度
+                     */
+                    cacheDirectory: true
+                }
             },
-
-            options: {
-                /**
-                 * 缓存编译结果加快下次编译速度
-                 */
-                cacheDirectory: true
-            }
         }]
     },
 
@@ -150,7 +158,7 @@ module.exports = {
      * 
      */
     // devtool: 'eval',
-    // devtool: 'cheap-source-map',
+    devtool: 'eval-source-map',
 
     /**
      * 各种插件
@@ -202,7 +210,8 @@ module.exports = {
         new HtmlWebpackPlugin({
             title: 'Custom title',
 
-            filename: '../index_build.html',
+            // ../ 根本访问不到？这是什么情况
+            filename: 'index_prod.html',
 
             /**
              * @see https://github.com/kangax/html-minifier#options-quick-reference
@@ -217,6 +226,24 @@ module.exports = {
             // template: 'src/tpl.html',
 
             template: 'src/tpl.ejs'
+        }),
+
+        /**
+         * 当使用 vendor 库时需要使用 common chuck 合并多个文件同时使用的 js 库
+         */
+        new webpack.optimize.CommonsChunkPlugin({
+            // (the commons chunk name)
+            name: "vendor",
+
+            // 不写默认是 [name].js 或 按 output 配置
+            // (the filename of the commons chunk)
+            // filename: "vendor.js",
+
+            // minChunks: 3,
+            // (Modules must be shared between 3 entries)
+
+            // chunks: ["pageA", "pageB"],
+            // (Only use these entries)
         })
     ],
 
@@ -239,14 +266,20 @@ module.exports = {
         // 绑定地址
         host: 'localhost',
         // 绑定端口
-        port: 9000,
+        port: 9020,
         // server 的 / 路由从哪个文件夹开始, 可以是数组，有多个 content base?
-        // 我觉得这个其实用处不太，除非服务器也用 alias目录了，不然没有什么东西放在各种不同的目录下
+        // 感觉这个其实用处不太，除非服务器也用 alias目录了，不然没有什么东西放在各种不同的目录下
         contentBase: [path.join(__dirname), path.join(__dirname, '/dist')],
+
+        // ?? 这是服务器的根目录？
+        publicPath: '/',
+
         // 开启 gzip 压缩
         compress: true,
-        // 自动打开 浏览器 ？ 并没有
-        open: true,
+
+        // 自动打开 浏览器 win下ok
+        // open: true,
+
         // 代理跨域请求
         proxy: {
             "/api": {

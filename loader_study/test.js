@@ -6,6 +6,13 @@ import css from './my.css'
 import sync from './sync-mod.js'
 import babelMod from './babel-mod.js'
 
+import _ from 'lodash';
+
+/**
+ * Common Chuck load
+ */
+console.log(_);
+
 /**
  * Use Webpack Define Plugin
  */
@@ -38,12 +45,10 @@ function getComponent() {
  * 使用 async await 必须使用 babel 的 transform-runtime plugin 或是使用 babel-polyfill, 二选一即可
  */
 var async_ret = (async() => {
-    debugger
     return 'aysnc func ret';
     // var async_mod = await getComponent();
 })();
 
-debugger
 
 // getComponent().then(component => {
 //     debugger;
