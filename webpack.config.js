@@ -1,7 +1,18 @@
 const path = require('path');
 const webpack = require('webpack');
+
+// extract style to css file
 const ExtractTextPlugin = require("extract-text-webpack-plugin");
+
+// html template inject
 const HtmlWebpackPlugin = require('html-webpack-plugin');
+
+// js compress
+const UglifyJSPlugin = require('uglifyjs-webpack-plugin');
+
+const DotenvPlugin = require('dotenv-webpack');
+
+process.env.PRODUCTION = false;
 
 module.exports = {
     /**
@@ -90,15 +101,28 @@ module.exports = {
             // npm install style-loader --save-dev
             // npm install css-loader --save-dev
 
+            /**
+             * css loader 会入 import 中读出 css 样式
+             * style loader 会把样式插入到 html 中的 style 标签中 
+             */
             // use: [
             //     'style-loader',
             //     'css-loader'
             // ]
 
-            // 配合 extract text 放到外面 在 devServer 中好使不行的
+            /**
+             * 配合 extract text plugin 可以把 style 中的 css 提取成文件
+             */
             use: ExtractTextPlugin.extract({
                 fallback: "style-loader",
-                use: "css-loader"
+                use: {
+                    loader: "css-loader",
+
+                    // 如需要压缩可以这样写
+                    options: {
+                        // minimize: false // true
+                    }
+                }
             })
         }, {
             /**
@@ -111,12 +135,62 @@ module.exports = {
             use: {
                 loader: 'babel-loader',
                 options: {
-                    /**
-                     * 缓存编译结果加快下次编译速度
-                     */
                     cacheDirectory: true
                 }
-            },
+            }
+        }, {
+            /**
+             * less
+             */
+            test: /\.less$/,
+
+            /**
+             * 用 ExtractTextPlugin 提出成单独的文件
+             */
+            use: ExtractTextPlugin.extract({
+                fallback: "style-loader",
+                use: [{
+                    /**
+                     * translates CSS into CommonJS
+                     * 
+                     * css loader 自带 cssnano , options 中 minified true 即可
+                     * @see https://github.com/webpack-contrib/css-loader
+                     */
+                    loader: "css-loader",
+                    options: {
+                        // 使用 css module
+                        // 在 react 上比较有用
+                        // modules: true
+                    }
+                }, {
+                    /**
+                     * 如果使用 postcss 要放在 style - css loader 后面，
+                     * 其他预编译 css loader的前面
+                     * 并且可以直接替换 css - loader 的位置？
+                     */
+                    loader: 'postcss-loader'
+                }, {
+                    loader: "less-loader" // compiles Less to CSS
+                }]
+            }),
+
+            // use: [{
+            //     loader: "style-loader" // creates style nodes from JS strings
+            // }, {
+            //     loader: "css-loader" // translates CSS into CommonJS
+            // }, {
+            //     loader: "less-loader" // compiles Less to CSS
+            // }]
+        }, {
+            /**
+             * 使用自定义的 loader 在 node_modules 中新建一个 zc-loader
+             */
+            test: /\.zc$/,
+            use: [{
+                loader: 'babel-loader'
+            }, {
+                loader: 'zc-loader'
+            }]
         }]
     },
 
@@ -130,6 +204,8 @@ module.exports = {
         // import {xx} from 'Utils/xxx.js' 目录解析的路径替换
         alias: {
             Utils: path.resolve(__dirname, 'src/utils/'),
+            src: path.resolve(__dirname, 'loader_study/'),
+            root: path.resolve(__dirname),
         },
         // import {xx} from 'Utils/xxx' .js 或 .vue 后缀就不用写了
         extensions: ['.js', '.vue']
@@ -177,7 +253,29 @@ module.exports = {
             PRODUCTION: true,
             // key 就会被替换成 value
             'process.env.NODE_ENV': JSON.stringify(process.env.NODE_ENV),
+
+            'process.env.PRODUCTION': 'this is in development stage',
         }),
+
+        /**
+         * env plugin 就是 define 的简写
+         * @see https://webpack.js.org/plugins/environment-plugin/
+         * 配合 require('dotenv').config()
+         * 但是 Variables coming from process.env are always strings.
+         * 所以 里面这个 app_debug 是 "true" 不是 true
+         * 
+         */
+        // new webpack.EnvironmentPlugin(['APP_DEBUG', 'SOME_AK']),
+
+        /**
+         * 这个是 dotenv + EnvironmentPlugin 
+         * dotenv for webpack plugin
+         * @see https://github.com/mrsteele/dotenv-webpack
+         */
+        new DotenvPlugin({
+            path: '.env' // can ignore or set other env path
+        }),
+
 
         // 自动载入预设的模块，不需要在代码中 import 可以直接用
         // new webpack.ProvidePlugin({
@@ -190,7 +288,10 @@ module.exports = {
          * 需要在 loader 处配合使用
          *      @see https://webpack.js.org/plugins/extract-text-webpack-plugin/
          */
-        new ExtractTextPlugin("styles.css"),
+        new ExtractTextPlugin({
+            filename: "[id].[contenthash:6].css",
+
+        }),
 
         /**
          * 代码优化：把相同的引用提取到同一个模块中
@@ -244,7 +345,22 @@ module.exports = {
 
             // chunks: ["pageA", "pageB"],
             // (Only use these entries)
-        })
+        }),
+
+
+        /** 
+         * @see https://webpack.js.org/plugins/uglifyjs-webpack-plugin/
+         * 只能压缩 js 不能压缩 css 
+         */
+        // new UglifyJSPlugin(),
+
+
+        // 对就 babel 的还有 BabelMinifyWebpackPlugin
+        /**
+         * 编译出来加个 Banner 头
+         */
+        new webpack.BannerPlugin("!!!!!! THIS IS A WEBPACK 3 STUDY CASE ZEON USE !!!!!!!"),
+
     ],
 
     // 监听文件改动就重新编译
