@@ -1,0 +1,28 @@
+/* custom properties */
+:root {
+    --fontSize: 1rem;
+    --mainColor: #12345678;
+    --highlightColor: hwb(190, 35%, 20%);
+}
+
+@my-var: 10px;
+
+body {
+    h1:first-letter {
+        color: peru;
+        font-size: @my-var;
+    }
+
+    h2 {
+        display: flex;
+        color: var(--mainColor);
+    }
+
+    h3:fullscreen {
+        display: flex;
+    }
+}
+
+.some-mod {
+    display: grid;
+}
