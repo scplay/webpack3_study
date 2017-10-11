@@ -53,9 +53,14 @@ module.exports = {
         // 异步加载的模块的命名
         chunkFilename: '[id].[name].[chunkhash].js',
 
-        // 运行时js载入根目录
-        // js代码在浏览器中运行时载入对应的 module 时会加上的前缀
-        // 这个值会影响 dev server 的根路径 ？？？ 
+        /**
+         * 运行时js载入根目录
+         * js代码在浏览器中运行时载入对应的 module 时会加上的前缀
+         *
+         * 对于需要加载一些不编译的静态文件时有作用
+         * 文档建议这个值如果存在，应与 devServer.publicPath 一致 
+         *
+         */
         // publicPath: '/dist/',
 
         // 导出的各种类型输出库的名字，如果不设置整个编译结果就是个IIFE
