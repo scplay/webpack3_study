@@ -35,14 +35,14 @@ module.exports = {
      * 需要增加一个通用库时 entry 的写法
      */
     entry: {
-        app: "./loader_study/test.js",
+        app: "./loader_study/main.js",
         vendor: ["lodash"],
     },
 
     // 输出
     output: {
-        // 编译时输出的根目录
-        // 这是 filename 与 chunkFilename 编译到的目录，不影响 runtime 
+        // 编译完成时各种模块的输出到的根目录
+        // 这是 filename 与 chunkFilename 编译到的目录，只在编译输出文件时起作用 
         path: path.resolve(__dirname, 'dist'),
 
         // filename: 'main.js',
@@ -50,16 +50,23 @@ module.exports = {
         // 使用 common chunk 一定要这么写，因为会编译出多个文件
         filename: '[name].[chunkhash].js',
         // filename: 'dist/[id].[hash].main.js',
+
         // 异步加载的模块的命名
         chunkFilename: '[id].[name].[chunkhash].js',
 
         /**
-         * 运行时js载入根目录
-         * js代码在浏览器中运行时载入对应的 module 时会加上的前缀
-         *
-         * 对于需要加载一些不编译的静态文件时有作用
+         * 对于需要加载一些不编译的静态文件时有作用，
+         * 可能是编译完成后输出的文件放到了路径不同的 CDN 或其他服务器上 
          * 文档建议这个值如果存在，应与 devServer.publicPath 一致 
-         *
+         *  
+         * @example 比如 path 值是 dist ， filename 值是 xx.js , 最终编译好的文件在
+         * dist/xx.js 中，而 html 的 script src 的值取决于（html plugin会根据
+         * filename的位置，自动的修改与 output.path + output.filename 相对应的路径 
+         * 如果 html 与 dist 同目录，src中的路径是 xx.js 或 dist/xx.js)
+         * 如果 html 是 ../xx.html , src中的路径是 dist/xx.js
+         * 而如果 dist 文件夹最后放在 laravel 的 public/wx/dist 中 
+         * 如果 publicPath 的值是 /wx/ , 最后html中 src 的值是 /wx/dist/xx.js
+         * 
          */
         // publicPath: '/dist/',
 
@@ -295,7 +302,6 @@ module.exports = {
          */
         new ExtractTextPlugin({
             filename: "[id].[contenthash:6].css",
-
         }),
 
         /**
@@ -316,8 +322,11 @@ module.exports = {
         new HtmlWebpackPlugin({
             title: 'Custom title',
 
-            // ../ 根本访问不到？这是什么情况
-            filename: 'index_prod.html',
+            /**
+             * ../ 这个文件的位置是根据 output.path 相对的
+             * 主要是编译模板文件最终输出的位置
+             */
+            filename: '../index_prod.html',
 
             /**
              * @see https://github.com/kangax/html-minifier#options-quick-reference
@@ -392,8 +401,8 @@ module.exports = {
         // 感觉这个其实用处不太，除非服务器也用 alias目录了，不然没有什么东西放在各种不同的目录下
         contentBase: [path.join(__dirname), path.join(__dirname, '/dist')],
 
-        // ?? 这是服务器的根目录？
-        publicPath: '/',
+        // 这是服务器的根目录？
+        // publicPath: '/dist/',
 
         // 开启 gzip 压缩
         compress: true,
