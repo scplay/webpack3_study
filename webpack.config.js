@@ -68,7 +68,7 @@ module.exports = {
          * 如果 publicPath 的值是 /wx/ , 最后html中 src 的值是 /wx/dist/xx.js
          * 
          */
-        // publicPath: '/dist/',
+        publicPath: '/dist/',
 
         // 导出的各种类型输出库的名字，如果不设置整个编译结果就是个IIFE
         library: {
@@ -133,6 +133,7 @@ module.exports = {
                     // 如需要压缩可以这样写
                     options: {
                         // minimize: false // true
+                        // minimize: true 
                     }
                 }
             })
@@ -220,7 +221,25 @@ module.exports = {
             root: path.resolve(__dirname),
         },
         // import {xx} from 'Utils/xxx' .js 或 .vue 后缀就不用写了
-        extensions: ['.js', '.vue']
+        extensions: ['.js', '.vue'],
+
+        // 此目录优先于 node_modules/ 搜索 模块位置
+        // modules: path.resolve(__dirname, 'other_node_modules/'),
+
+        /**
+         * @see http://www.tangshuang.net/3343.html
+         * 当引用 jQu 会直接找global.jQuery（如果要CJS或ReqJs等格式要写）, 而不打包
+         * 这种主要用于包已经在 CDN 中，本地不需要再打包一遍
+         */
+        // externals : [
+        //     // require('jQu') -> module.exports = jQuery
+        //     jQu: 'jQuery',
+        //     lo: {
+        //         commonjs: "lodash", // export.modules 
+        //         amd: "lodash", // requireJs
+        //         root: "_" // indicates global variable
+        //     }
+        // ]
 
     },
 
@@ -246,7 +265,7 @@ module.exports = {
      * 
      */
     // devtool: 'eval',
-    devtool: 'eval-source-map',
+    // devtool: 'eval-source-map',
 
     /**
      * 各种插件
@@ -320,13 +339,15 @@ module.exports = {
          * 多个入口或用 hash js name 时，extract css 文件时，都需要动态注入
          */
         new HtmlWebpackPlugin({
-            title: 'Custom title',
+            title: 'Custom Title',
 
             /**
              * ../ 这个文件的位置是根据 output.path 相对的
+             * 但是 devServer 时，是按 publicPath 输出的
              * 主要是编译模板文件最终输出的位置
              */
-            filename: '../index_prod.html',
+            // filename: '../index_prod.html',
+            filename: 'index_prod.html',
 
             /**
              * @see https://github.com/kangax/html-minifier#options-quick-reference
@@ -365,6 +386,8 @@ module.exports = {
         /** 
          * @see https://webpack.js.org/plugins/uglifyjs-webpack-plugin/
          * 只能压缩 js 不能压缩 css 
+         * 可以在 CLI 中加入 -p 或 --optimize-minimize，会自动引用 UglifyJSPlugin？
+         * 
          */
         // new UglifyJSPlugin(),
 
@@ -380,6 +403,9 @@ module.exports = {
     // 监听文件改动就重新编译
     // watch: true,
 
+    // 缓存
+    cache: true,
+
     /**
      * devServer 提供一个简单服务器 用于实时预览编译结果，
      *      开启 webpack-dev-server 时会自动 watch true 监听编译
@@ -391,24 +417,33 @@ module.exports = {
      */
     devServer: {
         // 开启 watch 
-        // 允许外网访问
+        // 不检查访问者的 host
         disableHostCheck: true,
         // 绑定地址
         host: 'localhost',
         // 绑定端口
         port: 9020,
-        // server 的 / 路由从哪个文件夹开始, 可以是数组，有多个 content base?
-        // 感觉这个其实用处不太，除非服务器也用 alias目录了，不然没有什么东西放在各种不同的目录下
-        contentBase: [path.join(__dirname), path.join(__dirname, '/dist')],
 
-        // 这是服务器的根目录？
-        // publicPath: '/dist/',
+        // 可以提供静态资源，优先级高于 publicPath, 默认也是 / 
+        // contentBase: [path.join(__dirname), path.join(__dirname, '/dist')],
+
+        // 这是服务器的根目录, 默认就是/, 如果不写，编译输出按
+        // output 中的 publicPath 路径，但是写了这个后就按
+        // 这个路径开始编译
+        // publicPath: '/',
 
         // 开启 gzip 压缩
         compress: true,
 
         // 自动打开 浏览器 win下ok
         // open: true,
+
+        // 开启 HMR ?
+        // hot: true,
+        
+        // 不 refresh page，最好在 CLI 上写 --inline，
+        // 写这里要加载 webpack 的 HMR Plugin
+        // inline: true
 
         // 代理跨域请求
         proxy: {

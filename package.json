@@ -10,9 +10,9 @@
         "start": "rm -f ./dist/* && cross-env NODE_ENV=production npm run build",
         "poststart": "echo \"compile end\"",
 
-        "build": "webpack --config webpack.config.js",
+        "build": "webpack -p --config webpack.config.js",
         "watch": "webpack --watch",
-        "serve": "cross-env NODE_ENV=development webpack-dev-server"
+        "serve": "cross-env NODE_ENV=development webpack-dev-server --progress --color"
     },
     "keywords": [],
     "author": "zeon",
